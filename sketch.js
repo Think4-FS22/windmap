@@ -19,7 +19,7 @@ const tree = d3.quadtree();
 
 function preload() {
   geodata = loadJSON("world.geojson");
-  weatherdata = loadJSON("weather-switzerland.json");
+  weatherdata = loadJSON("weather-switzerland-example.json");
 }
 
 function setup() {
@@ -182,4 +182,18 @@ class Particle {
     stroke(0);
     line(this.prevPos.x, this.prevPos.y, this.position.x, this.position.y);
   }
+}
+
+function fetchData(lat, lon) {
+  console.log("fetchData", lat, lon);
+
+  let url = `https://pro.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&APPID=a0e50a6cee2f3c1fd09b8b8a638f49f0`;
+
+  d3.json(url).then(function (response) {
+    console.log("response", response);
+    json = response;
+    console.log("wind", json.wind.deg);
+    data.push(json);
+    //   redraw();
+  });
 }
