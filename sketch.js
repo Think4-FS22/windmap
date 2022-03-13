@@ -45,8 +45,10 @@ let projection;
 let countries;
 let country;
 
-let n = 100;
+let n = 5000;
 let particles = [];
+
+const tree = d3.quadtree();
 
 function preload() {
   geodata = loadJSON("world.geojson");
@@ -55,15 +57,17 @@ function preload() {
 
 function setup() {
   createCanvas(800, 600);
+  angleMode(DEGREES);
 
   const testvec = createVector(1, 0);
+  testvec.setHeading(radians(90));
   console.log("heading", testvec.heading());
 
   projection = d3
     .geoMercator()
-    .center([8.30801, 47.04554])
+    .center([8.227512, 46.818188])
     .translate([width / 2, height / 2])
-    .scale(8000);
+    .scale(10000);
 
   countries = geodata.features;
   console.log(countries[0]);
@@ -77,9 +81,9 @@ function setup() {
   console.log(country);
 
   for (let i = 0; i < n; i++) {
-    let lon = random(bounds.left, bounds.right);
-    let lat = random(bounds.bottom, bounds.top);
-    let p = new Particle(lon, lat);
+    let x = random(0, width);
+    let y = random(0, height);
+    let p = new Particle(x, y);
     particles.push(p);
   }
 
@@ -97,15 +101,35 @@ function setup() {
   //   }
   // }
   data = weatherSwitzerland;
+
+  tree
+    .x(function (d) {
+      return projection([d.coord.lon, d.coord.lat])[0];
+    })
+    .y(function (d) {
+      return projection([d.coord.lon, d.coord.lat])[1];
+    })
+    .addAll(data);
+
+  let p = tree.find(width / 2, height / 2);
+
+  console.log("p", p);
+
+  // for(let i=0; i<data.length; i++){
+
+  // }
   console.log(data);
-  frameRate(1);
-  noLoop();
+  frameRate(30);
+  // noLoop();
 }
 
 function draw() {
+  background(240, 100);
   // draw polygons
 
   // draw map
+  noFill();
+  stroke(0);
   let coordinates = country.geometry.coordinates;
   let type = country.geometry.type;
 
@@ -127,24 +151,24 @@ function draw() {
 
   // draw wind
   for (let i = 0; i < data.length; i++) {
-    console.log("hoi");
+    // console.log("hoi");
     let wind = data[i].wind;
     let lon = data[i].coord.lon;
     let lat = data[i].coord.lat;
     // let x = map(lon, bounds.left, bounds.right, 0, width);
-    // let y = map(lat, bounds.bottom, bounds.top, height, 0);
+    // let y = map(lat, bounds.bottom, bunds.top, height, 0);
     let xy = projection([lon, lat]);
     let x = xy[0];
     let y = xy[1];
-    let v = createVector(5 * wind.speed, 0);
-    v.setHeading(radians(wind.deg - 90 + 180));
+    let v = createVector(10, 0);
+    v.setHeading(radians(wind.deg - 90 - 180));
     fill(0);
     noStroke();
-    ellipse(x, y, 2, 2);
+    // ellipse(x, y, 3, 3);
     stroke(0);
-    line(x, y, x + v.x, y + v.y);
+    // line(x, y, x + v.x, y + v.y);
     if (i % 13 == 0) {
-      text(data[i].name + " " + wind.deg + " / " + wind.speed, x, y);
+      //   text(data[i].name + " " + wind.deg, x, y);
     }
   }
 
@@ -161,22 +185,46 @@ function keyTyped() {
 }
 
 class Particle {
-  constructor(lon, lat) {
-    this.position = createVector(lon, lat);
+  constructor(x, y) {
+    this.position = createVector(x, y);
+    this.prevPos = createVector(x, y);
     this.speed = createVector(0, 0);
+    //  this.acc = createVector(0, 0);
+    this.age = 0;
   }
 
   update() {
+    let weatherStation = tree.find(this.position.x, this.position.y);
+    let dir = weatherStation.wind.deg;
+    let speed = weatherStation.wind.speed;
+    this.speed.set(1, 0);
+    this.speed.setHeading(radians(dir - 90 - 180));
+    this.speed.normalize();
+    this.speed.mult(0.2 * speed);
+    // this.speed.set(0, 0);
+    // this.speed.add(this.acc);
+    //this.speed.limit(3);
+    // console.log("weatherStation", weatherStation);
+    this.prevPos = this.position.copy();
     this.position.add(this.speed);
+
+    this.age++;
+    if (random(0, 1) > 0.98 || this.age > 100 || this.speed.mag() < 0.1) {
+      this.age = 0;
+      this.position = createVector(random(0, width), random(0, height));
+      this.prevPos = this.position.copy();
+      this.speed = createVector(0, 0);
+      this.acc = createVector(0, 0);
+    }
   }
 
   display() {
-    noStroke();
-    fill(0);
-    let xy = projection([this.position.x, this.position.y]);
-    let x = xy[0];
-    let y = xy[1];
-    ellipse(x, y, 5, 5);
+    // let xy = projection([this.position.x, this.position.y]);
+    // let x = xy[0];
+    // let y = xy[1];
+    // ellipse(this.position.x, this.position.y, 2, 2);
+    stroke(0);
+    line(this.prevPos.x, this.prevPos.y, this.position.x, this.position.y);
   }
 }
 
