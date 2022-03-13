@@ -41,6 +41,13 @@ let i = 0;
 let j = 0;
 
 let done = false;
+let projection;
+let countries;
+let country;
+
+function preload() {
+  geodata = loadJSON("world.geojson");
+}
 
 function setup() {
   createCanvas(800, 600);
@@ -48,23 +55,61 @@ function setup() {
   const testvec = createVector(1, 0);
   console.log("heading", testvec.heading());
 
-  let u = 60;
-  let v = 30;
-  for (let i = 0; i < u; i++) {
-    for (let j = 0; j < v; j++) {
-      let lon = map(i, 0, u, bounds.left, bounds.right);
-      let lat = map(j, 0, v, bounds.bottom, bounds.top);
-      setTimeout(function () {
-        fetchData(lat, lon);
-      }, (i + j) * 2000);
-    }
-  }
+  projection = d3
+    .geoMercator()
+    .center([8.30801, 47.04554])
+    .translate([width / 2, height / 2])
+    .scale(8000);
+
+  countries = geodata.features;
+  console.log(countries[0]);
+
+  let selection = geodata.features.filter(function (d) {
+    return d.properties.CNTR_ID == "CH";
+  });
+
+  country = selection[0];
+
+  console.log(country);
+
+  // let u = 60;
+  // let v = 30;
+  // for (let i = 0; i < u; i++) {
+  //   for (let j = 0; j < v; j++) {
+  //     let lon = map(i, 0, u, bounds.left, bounds.right);
+  //     let lat = map(j, 0, v, bounds.bottom, bounds.top);
+  //     setTimeout(function () {
+  //       fetchData(lat, lon);
+  //     }, (i + j) * 2000);
+  //   }
+  // }
 
   console.log(json);
   frameRate(1);
 }
 
 function draw() {
+  // draw polygons
+
+  let coordinates = country.geometry.coordinates;
+  let type = country.geometry.type;
+
+  for (let j = 0; j < coordinates.length; j++) {
+    let coordinates2 = [];
+    if (type == "Polygon") {
+      coordinates2 = coordinates[j];
+    } else if (type == "MultiPolygon") {
+      coordinates2 = coordinates[j][0];
+    }
+
+    beginShape();
+    for (let k = 0; k < coordinates2.length; k++) {
+      let xy = projection(coordinates2[k]);
+      vertex(xy[0], xy[1]);
+    }
+    endShape();
+  }
+
   // if (!done) {
   //   let lon = map(i, 0, 10, bounds.left, bounds.right);
   //   let lat = map(j, 0, 5, bounds.bottom, bounds.top);
@@ -78,52 +123,28 @@ function draw() {
   //     done = true;
   //   }
   // }
-
-  if (!json) {
-    background(255, 0, 0);
-    return;
-  }
-  background(250);
-
-  for (let i = 0; i < data.length; i++) {
-    let wind = data[i].wind;
-    let lon = data[i].coord.lon;
-    let lat = data[i].coord.lat;
-    let x = map(lon, bounds.left, bounds.right, 0, width);
-    let y = map(lat, bounds.bottom, bounds.top, height, 0);
-    let v = createVector(0.5 * wind.speed, 0);
-    v.setHeading(radians(wind.deg - 90 + 180));
-
-    fill(0);
-    noStroke();
-    ellipse(x, y, 2, 2);
-    stroke(0);
-    line(x, y, x + v.x, y + v.y);
-
-    if (i % 59 == 0) {
-      text(data[i].name + " " + wind.deg, x, y);
-    }
-  }
-
-  //fill(0);
-
-  // // Get the temperature
-  // temperature = json.main.temp;
-
-  // // Grab the description, look how we can "chain" calls.
-  // weather = json.weather[0].description;
-
-  // wind = json.wind;
-
-  // id = json.id;
-  // name = json.name;
-
-  // // Display all the stuff we want to display
-  // text("Id: " + id, 10, 30);
-  // text("Name: " + name, 10, 50);
-  // text("Current temperature: " + temperature, 10, 70);
-  // text("Forecast: " + weather, 10, 90);
-  // text("Wind: " + wind.speed + " / " + wind.deg + " / " + wind.gust, 10, 120);
+  // if (!json) {
+  //   background(255, 0, 0);
+  //   return;
+  // }
+  // background(250);
+  // for (let i = 0; i < data.length; i++) {
+  //   let wind = data[i].wind;
+  //   let lon = data[i].coord.lon;
+  //   let lat = data[i].coord.lat;
+  //   let x = map(lon, bounds.left, bounds.right, 0, width);
+  //   let y = map(lat, bounds.bottom, bounds.top, height, 0);
+  //   let v = createVector(0.5 * wind.speed, 0);
+  //   v.setHeading(radians(wind.deg - 90 + 180));
+  //   fill(0);
+  //   noStroke();
+  //   ellipse(x, y, 2, 2);
+  //   stroke(0);
+  //   line(x, y, x + v.x, y + v.y);
+  //   if (i % 59 == 0) {
+  //     text(data[i].name + " " + wind.deg, x, y);
+  //   }
+  // }
 }
 
 /*
