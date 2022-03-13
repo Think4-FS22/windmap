@@ -45,6 +45,9 @@ let projection;
 let countries;
 let country;
 
+let n = 100;
+let particles = [];
+
 function preload() {
   geodata = loadJSON("world.geojson");
   data = loadJSON("weather-switzerland.json");
@@ -72,6 +75,13 @@ function setup() {
   country = selection[0];
 
   console.log(country);
+
+  for (let i = 0; i < n; i++) {
+    let lon = random(bounds.left, bounds.right);
+    let lat = random(bounds.bottom, bounds.top);
+    let p = new Particle(lon, lat);
+    particles.push(p);
+  }
 
   // let u = 20;
   // let v = 20;
@@ -115,24 +125,7 @@ function draw() {
     endShape();
   }
 
-  // if (!done) {
-  //   let lon = map(i, 0, 10, bounds.left, bounds.right);
-  //   let lat = map(j, 0, 5, bounds.bottom, bounds.top);
-  //   fetchData(lat, lon);
-  //   i++;
-  //   if (i > 10) {
-  //     i = 0;
-  //     j++;
-  //   }
-  //   if (j > 5) {
-  //     done = true;
-  //   }
-  // }
-  // if (!json) {
-  //   background(255, 0, 0);
-  //   return;
-  // }
-  // background(250);
+  // draw wind
   for (let i = 0; i < data.length; i++) {
     console.log("hoi");
     let wind = data[i].wind;
@@ -154,11 +147,37 @@ function draw() {
       text(data[i].name + " " + wind.deg + " / " + wind.speed, x, y);
     }
   }
+
+  // draw particles
+  for (let i = 0; i < particles.length; i++) {
+    particles[i].update();
+    particles[i].display();
+  }
 }
 
 function keyTyped() {
   console.log(data);
   redraw();
+}
+
+class Particle {
+  constructor(lon, lat) {
+    this.position = createVector(lon, lat);
+    this.speed = createVector(0, 0);
+  }
+
+  update() {
+    this.position.add(this.speed);
+  }
+
+  display() {
+    noStroke();
+    fill(0);
+    let xy = projection([this.position.x, this.position.y]);
+    let x = xy[0];
+    let y = xy[1];
+    ellipse(x, y, 5, 5);
+  }
 }
 
 /*
