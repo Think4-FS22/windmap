@@ -45,7 +45,7 @@ let projection;
 let countries;
 let country;
 
-let n = 5000;
+let n = 1000;
 let particles = [];
 
 const tree = d3.quadtree();
@@ -124,7 +124,7 @@ function setup() {
 }
 
 function draw() {
-  background(240, 100);
+  background(240, 50);
   // draw polygons
 
   // draw map
@@ -189,7 +189,7 @@ class Particle {
     this.position = createVector(x, y);
     this.prevPos = createVector(x, y);
     this.speed = createVector(0, 0);
-    //  this.acc = createVector(0, 0);
+    this.acc = createVector(0, 0);
     this.age = 0;
   }
 
@@ -197,13 +197,13 @@ class Particle {
     let weatherStation = tree.find(this.position.x, this.position.y);
     let dir = weatherStation.wind.deg;
     let speed = weatherStation.wind.speed;
-    this.speed.set(1, 0);
-    this.speed.setHeading(radians(dir - 90 - 180));
-    this.speed.normalize();
-    this.speed.mult(0.2 * speed);
+    this.acc.set(1, 0);
+    this.acc.setHeading(radians(dir - 90 - 180));
+    this.acc.normalize();
+    this.acc.mult(0.2 * speed);
     // this.speed.set(0, 0);
-    // this.speed.add(this.acc);
-    //this.speed.limit(3);
+    this.speed.add(this.acc);
+    this.speed.limit(3);
     // console.log("weatherStation", weatherStation);
     this.prevPos = this.position.copy();
     this.position.add(this.speed);
