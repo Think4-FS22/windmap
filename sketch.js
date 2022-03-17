@@ -117,10 +117,10 @@ function draw() {
     let y = xy[1];
     let v = createVector(10, 0);
     v.setHeading(radians(wind.deg - 90 - 180));
-    fill(0, 50);
+    fill(0, 20);
     noStroke();
     ellipse(x, y, 3, 3);
-    stroke(0, 50);
+    stroke(0, 20);
     line(x, y, x + v.x, y + v.y);
   }
 
